@@ -83,7 +83,7 @@ class Keys(object):
         if device == None:
             sys.exit('[ERROR] Device in Pwned DFU mode not found. Exiting...')
 
-        if 'PWND:[checkm8]' not in device.serial_number:
+        if 'PWND:' not in device.serial_number:
             sys.exit('[ERROR] Attempting to decrypt keys with a device not in Pwned DFU mode. Exiting...')
 
     def save_keys(self, version, buildid):

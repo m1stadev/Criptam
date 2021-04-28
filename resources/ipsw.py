@@ -63,5 +63,6 @@ class IPSW(object):
             if self.components[x]['encrypted']:
                 shutil.move(f'.tmp/mass-decryptor/{self.components[x]["path"]}', f'.tmp/mass-decryptor/{self.components[x]["file"]}')
 
-        shutil.rmtree('.tmp/mass-decryptor/Firmware')
+        if os.path.isdir('.tmp/mass-decryptor/Firmware'):
+            shutil.rmtree('.tmp/mass-decryptor/Firmware')
         return True

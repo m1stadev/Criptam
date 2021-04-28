@@ -11,10 +11,10 @@ class Manifest(object):
         self.components = self.fetch_components()
 
     def fetch_components(self):
-        components = {}
+        components = dict()
 
         for i in range(0, len(self.manifest['BuildIdentities'])):
-            if not self.manifest['BuildIdentities'][i]['Info']['DeviceClass'] == self.boardconfig:
+            if not self.manifest['BuildIdentities'][i]['Info']['DeviceClass'].lower() == self.boardconfig.lower():
                 continue
 
             if self.manifest['BuildIdentities'][i]['Info']['RestoreBehavior'] == 'Update':
@@ -81,11 +81,11 @@ class RestoreManifest(object):
         self.device = device
         self.manifest = plistlib.load(manifest)
         self.boardconfig = boardconfig
+        self.platform = self.fetch_platform()
 
     def fetch_platform(self):
         for x in range(0, len(self.manifest['DeviceMap'])):
-            if self.manifest['DeviceMap'][x]['BoardConfig'] == self.boardconfig:
-
+            if self.manifest['DeviceMap'][x]['BoardConfig'].lower() == self.boardconfig.lower():
                 if self.manifest['DeviceMap'][x]['Platform'].startswith('s5l89'):
                     return self.manifest['DeviceMap'][x]['Platform'][3:-1]
 

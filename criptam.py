@@ -92,7 +92,7 @@ def main():
 
         ipsw_dl.download_components(buildmanifest.components)
 
-        decrypt = keys.Keys(device_identifier, buildmanifest.components, restoremanifest.fetch_platform())
+        decrypt = keys.Keys(device_identifier, buildmanifest.components, restoremanifest.platform)
         if valid_device == None:
             decrypt.check_pwndfu()
             decrypt.check_platform()
