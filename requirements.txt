@@ -1,6 +1,0 @@
-ipwndfu
-kimg4
-mwclient
-pyusb
-remotezip
-requests

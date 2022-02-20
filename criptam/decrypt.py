@@ -1,8 +1,8 @@
-from device import Device
+from criptam.device import Device
+from criptam.utils import HiddenPrints
 from kimg4.img4 import IM4P
 from ipwndfu.main import decrypt_gid
 from ipwndfu import dfu
-from utils import HiddenPrints
 
 
 class Decrypt:

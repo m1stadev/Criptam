@@ -1,5 +1,5 @@
-from device import Device
-from manifest import Manifest
+from criptam.device import Device
+from criptam.manifest import Manifest
 
 import remotezip
 

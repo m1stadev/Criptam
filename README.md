@@ -8,10 +8,11 @@ Criptam is a tool written in Python to easily fetch decrypted [iOS bootchain](ht
 - A UNIX-like OS
 - An internet connection
 - A 64-bit device connected in DFU mode vulnerable to [checkm8](https://github.com/axi0mX/ipwndfu)
-- Libraries:
-    ```py
-    pip3 install -r requirements.txt
-    ```
+
+## Installation
+Criptam can be installed from [PyPI](https://pypi.org/project/criptam/), or locally (requires [poetry](https://python-poetry.org/)):
+
+    ./install.sh
 
 
 ## Usage
