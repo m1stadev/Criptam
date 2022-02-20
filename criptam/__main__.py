@@ -19,9 +19,7 @@ def main():
         usage="criptam -b 'buildid'",
     )
 
-    parser.add_argument(
-        '-b', '--buildid', help='iOS build to decrypt keys for', nargs=1
-    )
+    parser.add_argument('-b', '--buildid', help='iOS build to decrypt keys for')
     args = parser.parse_args()
 
     if not args.buildid:
@@ -30,7 +28,7 @@ def main():
     input('Please connect an iOS device in DFU mode to your PC, then press enter...')
     device = Device()
 
-    print(f'Getting IPSW URL for build: {args.buildid[0]}')
+    print(f'Getting IPSW URL for build: {args.buildid}')
     api = requests.get(
         f"https://api.ipsw.me/v4/device/{device.data['identifier']}?type=ipsw"
     ).json()
@@ -38,11 +36,11 @@ def main():
     try:
         ipsw = IPSW(
             device,
-            next(_['url'] for _ in api['firmwares'] if _['buildid'] == args.buildid[0]),
+            next(_['url'] for _ in api['firmwares'] if _['buildid'] == args.buildid),
         )
     except StopIteration:
         sys.exit(
-            f"Build {args.buildid[0]} does not exist for device: {device.data['identifier']}. Exiting."
+            f"Build {args.buildid} does not exist for device: {device.data['identifier']}. Exiting."
         )
 
     if not device.pwned:
