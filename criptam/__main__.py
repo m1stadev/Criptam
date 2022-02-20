@@ -41,7 +41,9 @@ def main():
             next(_['url'] for _ in api['firmwares'] if _['buildid'] == args.buildid[0]),
         )
     except StopIteration:
-        sys.exit(f'buildid {args.buildid[0]} does not exist')
+        sys.exit(
+            f"Build {args.buildid[0]} does not exist for device: {device.data['identifier']}. Exiting."
+        )
 
     if not device.pwned:
         print('Entering Pwned DFU mode...')
