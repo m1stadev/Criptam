@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "criptam"
-version = "1.0b1"
-description = "Criptam is a tool written in Python to easily fetch decrypted iOS bootchain firmware keys (excluding SEPOS) from a connected device."
+version = "1.0b2"
+description = "iOS firmware key decrypter"
 authors = ["m1stadev <adamhamdi31@gmail.com>"]
 maintainers = ["m1stadev <adamhamdi31@gmail.com>"]
 license = "BSD-3-Clause"
