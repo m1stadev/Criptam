@@ -1,12 +1,8 @@
-from collections import namedtuple
 from ipwndfu.main import pwn
 from ipwndfu import dfu
 
 import requests
 import sys
-
-Mode = namedtuple('Mode', ('RECOVERY', 'DFU'))
-mode = Mode(0x1281, 0x1227)
 
 
 class Device:
