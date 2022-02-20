@@ -9,9 +9,6 @@ import platform
 import requests
 import sys
 
-if platform.system() == 'Windows':
-    sys.exit('[ERROR] Windows systems are not supported. Exiting...')
-
 
 def main():
     parser = argparse.ArgumentParser(
@@ -24,6 +21,9 @@ def main():
 
     if not args.buildid:
         sys.exit(parser.print_help(sys.stderr))
+
+    if platform.system() == 'Windows':
+        sys.exit('[ERROR] Windows systems are not supported. Exiting...')
 
     input('Please connect an iOS device in DFU mode to your PC, then press enter...')
     device = Device()
