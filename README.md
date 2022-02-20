@@ -10,13 +10,11 @@ Criptam is a tool written in Python to easily decrypt [Firmware Keys](https://ww
 - A macOS or Linux computer
 - An Internet Connection
 - A 64-bit device connected in pwned DFU mode (vulnerable to [checkm8](https://github.com/axi0mX/ipwndfu))
-- A brain (Not completely necessary, but YMMV)
 - libusb from [Homebrew](https://brew.sh/)
 - Libraries:
     ```py
     pip3 install -r requirements.txt
     ```
-- [img4lib](https://github.com/xerub/img4lib)
 
 
 ## Usage
@@ -40,4 +38,3 @@ Criptam is a tool written in Python to easily decrypt [Firmware Keys](https://ww
 ## TODO
 - Add in support for iOS versions under iOS 10
 - Add in support for A9 devices
-- Import ipwndfu instead of calling the script via subprocess
