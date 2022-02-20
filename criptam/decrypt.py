@@ -1,6 +1,7 @@
-from device import Device, mode
+from device import Device
 from kimg4.img4 import IM4P
 from ipwndfu.main import decrypt_gid
+from ipwndfu import dfu
 from utils import HiddenPrints
 
 
@@ -11,7 +12,7 @@ class Decrypt:
     def decrypt_keys(self, img: bytes) -> tuple:
         image = IM4P(img)
 
-        device = self.device.get_device(mode.DFU, self.device.data['ECID'])
+        device = dfu.acquire_device(match=self.device.data['ECID'])
         with HiddenPrints():  # Hide ipwndfu's output
             dec_kbag = decrypt_gid(
                 device,
