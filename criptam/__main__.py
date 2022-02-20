@@ -32,7 +32,6 @@ def main():
         sys.exit('[ERROR] Windows systems are not supported. Exiting.')
 
     print(f'Criptam {__version__}')
-    input('\nPlease connect an iOS device in DFU mode to your PC, then press enter.')
     device = Device()
 
     buildid = args.buildid.upper()
