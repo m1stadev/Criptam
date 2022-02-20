@@ -15,7 +15,7 @@ __version__ = version(__package__)
 
 def main():
     parser = argparse.ArgumentParser(
-        description=f'Criptam {__version__} - Automatic Firmware Key decryptor',
+        description=f'Criptam {__version__} - iOS firmware key decrypter',
         usage="criptam -b 'buildid'",
     )
 
@@ -60,18 +60,18 @@ def main():
     llb = ipsw.read_file(ipsw.manifest.get_path('LLB'))
     iboot = ipsw.read_file(ipsw.manifest.get_path('iBoot'))
 
-    decryptor = Decrypt(device)
+    decrypter = Decrypt(device)
 
-    ibss_iv, ibss_key = decryptor.decrypt_keys(ibss)
+    ibss_iv, ibss_key = decrypter.decrypt_keys(ibss)
     print(f'\niBSS KBAG: {ibss_iv + ibss_key}')
 
-    ibec_iv, ibec_key = decryptor.decrypt_keys(ibec)
+    ibec_iv, ibec_key = decrypter.decrypt_keys(ibec)
     print(f'iBEC KBAG: {ibec_iv + ibec_key}')
 
-    llb_iv, llb_key = decryptor.decrypt_keys(llb)
+    llb_iv, llb_key = decrypter.decrypt_keys(llb)
     print(f'LLB KBAG: {llb_iv + llb_key}')
 
-    iboot_iv, iboot_key = decryptor.decrypt_keys(iboot)
+    iboot_iv, iboot_key = decrypter.decrypt_keys(iboot)
     print(f'iBoot KBAG: {llb_iv + llb_key}')
 
     print('\nDone!')
