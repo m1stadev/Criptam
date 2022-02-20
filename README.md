@@ -1,5 +1,5 @@
 # Criptam
-Criptam is a tool written in Python to easily fetch decrypted [bootchain](https://www.theiphonewiki.com/wiki/Bootchain) [firmware keys](https://www.theiphonewiki.com/wiki/Firmware_Keys) (excluding SEPOS) from a connected device.
+Criptam is a tool written in Python to easily fetch decrypted [iOS bootchain](https://www.theiphonewiki.com/wiki/Bootchain) [firmware keys](https://www.theiphonewiki.com/wiki/Firmware_Keys) (excluding SEPOS) from a connected device.
 
 ## Features
 - Automatically fetch decrypted bootchain firmware keys for any iOS version, no IPSW download required.
