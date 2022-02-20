@@ -1,3 +1,4 @@
+from criptam.utils import HiddenPrints
 from ipwndfu.main import pwn
 from ipwndfu import dfu
 
@@ -69,7 +70,8 @@ class Device:
         if 'PWND' in self.data.keys():
             return True
 
-        pwn(match_device=self.data['ECID'])
-        self.data = self._get_data()
+        with HiddenPrints():
+            pwn(match_device=self.data['ECID'])
 
-        return True
+        self.data = self._get_data()
+        return self.pwned
