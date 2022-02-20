@@ -7,7 +7,7 @@ Criptam is a tool written in Python to easily decrypt [Bootchain](https://www.th
 ## Requirements
 - A UNIX-like OS
 - An internet connection
-- A 64-bit device connected in pwned DFU mode (vulnerable to [checkm8](https://github.com/axi0mX/ipwndfu))
+- A 64-bit device connected in DFU mode vulnerable to [checkm8](https://github.com/axi0mX/ipwndfu)
 - Libraries:
     ```py
     pip3 install -r requirements.txt
