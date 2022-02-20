@@ -12,6 +12,9 @@ import sys
 
 __version__ = version(__package__)
 
+RELEASE_API = 'https://api.ipsw.me/v4/device'
+BETA_API = 'https://api.m1sta.xyz/betas'
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -34,26 +37,39 @@ def main():
 
     buildid = args.buildid.upper()
     print(f'\nGetting IPSW URL for build: {buildid}')
-    api = requests.get(
-        f"https://api.ipsw.me/v4/device/{device.data['identifier']}?type=ipsw"
-    ).json()
 
-    try:
-        ipsw = IPSW(
-            device,
-            next(_['url'] for _ in api['firmwares'] if _['buildid'] == buildid),
-        )
-    except StopIteration:
+    firm = None
+    for API_URL in (RELEASE_API, BETA_API):
+        api = requests.get(f"{API_URL}/{device.data['identifier']}").json()
+
+        if API_URL == RELEASE_API:
+            firmwares = api['firmwares']
+        elif API_URL == BETA_API:
+            firmwares = api
+
+        try:
+            firm = next(
+                firm for firm in firmwares if firm['buildid'].lower() == buildid.lower()
+            )
+        except StopIteration:
+            pass
+
+    if firm is None:
         sys.exit(
             f"iOS Build {buildid} does not exist for device: {device.data['identifier']}. Exiting."
         )
+
+    ipsw = IPSW(
+        device,
+        firm['url'],
+    )
 
     if not device.pwned:
         print('Entering Pwned DFU mode...')
         device.pwn()
 
     print(
-        f"Decrypting keys for iOS build: {buildid}, device: {device.data['identifier']}..."
+        f"Decrypting keys for iOS {firm['version']}, device: {device.data['identifier']}..."
     )
     ibss = ipsw.read_file(ipsw.manifest.get_path('iBSS'))
     ibec = ipsw.read_file(ipsw.manifest.get_path('iBEC'))
