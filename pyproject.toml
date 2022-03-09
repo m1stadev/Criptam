@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "criptam"
-version = "1.0b2"
+version = "1.0b3"
 description = "iOS firmware key decrypter"
 authors = ["m1stadev <adamhamdi31@gmail.com>"]
 maintainers = ["m1stadev <adamhamdi31@gmail.com>"]
