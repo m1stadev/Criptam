@@ -1,5 +1,6 @@
 from criptam.device import Device
 from criptam.manifest import Manifest
+from typing import Optional
 
 import remotezip
 
@@ -11,9 +12,15 @@ class IPSW:
 
         self.manifest = self.read_manifest()
 
-    def read_file(self, file: str) -> bytes:
-        with remotezip.RemoteZip(self.url) as ipsw:
-            return ipsw.read(file)
+    def read_file(self, file: str) -> Optional[bytes]:
+        try:
+            with remotezip.RemoteZip(self.url) as ipsw:
+                return ipsw.read(file)
 
-    def read_manifest(self):
-        return Manifest(self.read_file('BuildManifest.plist'), self.device.data['boardconfig'])
+        except remotezip.RemoteIOError:
+            pass
+
+    def read_manifest(self) -> Manifest:
+        return Manifest(
+            self.read_file('BuildManifest.plist'), self.device.data['boardconfig']
+        )
