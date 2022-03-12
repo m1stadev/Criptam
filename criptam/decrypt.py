@@ -19,4 +19,4 @@ class Decrypt:
                 (image.kbag.keybags[0].iv + image.kbag.keybags[0].key).hex(),
             )
 
-        return (dec_kbag[-32:], dec_kbag[:-64])
+        return (dec_kbag[:32], dec_kbag[-64:])
