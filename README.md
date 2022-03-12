@@ -19,6 +19,6 @@ Criptam can be installed from [PyPI](https://pypi.org/project/criptam/), or loca
 | Option (short) | Option (long) | Description |
 |----------------|---------------|-------------|
 | `-h` | `--help` | Shows all options avaiable |
-| `-b BUILDID` | `--buildid BUILDID` | iOS build to decrypt keys for |
-| `-m MAJOR` | `--major MAJOR` | Major iOS version to decrypt firmware keys for |
+| `-b BUILDID` | `--buildid BUILDID` | iOS build to decrypt firmware keys for |
+| `-m MAJOR` | `--major MAJOR` | Major iOS version to decrypt all firmware keys for |
 | `-a` | `--all` | Decrypt firmware keys for all versions |

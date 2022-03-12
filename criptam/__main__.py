@@ -27,7 +27,7 @@ def main():
         '-b', '--buildid', help='iOS build to decrypt firmware keys for'
     )
     version.add_argument(
-        '-m', '--major', help='Major iOS version to decrypt firmware keys for'
+        '-m', '--major', help='Major iOS version to decrypt all firmware keys for'
     )
     version.add_argument(
         '-a',
