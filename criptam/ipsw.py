@@ -18,7 +18,7 @@ class IPSW:
                 return ipsw.read(file)
 
         except remotezip.RemoteIOError:
-            pass
+            return None
 
     def read_manifest(self) -> Manifest:
         return Manifest(
