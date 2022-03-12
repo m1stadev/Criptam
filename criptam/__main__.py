@@ -117,7 +117,13 @@ def main():
                 )
 
         print(
-            f"Decrypting keys for iOS {firm['version']}, device: {device.data['identifier']}..."
+            "Decrypting keys for iOS {}, device: {}{}...".format(
+                firm['version'],
+                device.data['identifier'],
+                f" ({device.data['boardconfig']})"
+                if 0x8000 <= device.data['CPID'] <= 0x8003
+                else None,
+            )
         )
         ibss = ipsw.read_file(ipsw.manifest.get_path('iBSS'))
         ibec = ipsw.read_file(ipsw.manifest.get_path('iBEC'))
