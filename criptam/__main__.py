@@ -122,7 +122,7 @@ def main():
                 device.data['identifier'],
                 f" ({device.data['boardconfig']})"
                 if 0x8000 <= device.data['CPID'] <= 0x8003
-                else None,
+                else '',
             )
         )
         ibss = ipsw.read_file(ipsw.manifest.get_path('iBSS'))
