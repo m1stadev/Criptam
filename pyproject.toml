@@ -29,13 +29,15 @@ criptam = "criptam.__main__:main"
 python = "^3.9"
 ipwndfu = "~2.0.0b5"
 mwclient = "^0.10.1"
-pyimg4 = "^0.3"
+pyimg4 = "^0.5"
 pyusb = "^1.2.1"
 remotezip = "^0.9.3"
 requests = "^2.27.1"
 
 [tool.poetry.dev-dependencies]
 black = "^22.1.0"
+isort = "^5.10.1"
+
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/m1stadev/Criptam/issues"

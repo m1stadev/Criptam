@@ -128,12 +128,18 @@ cryptography = ">=36.0.1,<37.0.0"
 pyusb = ">=1.2.1,<2.0.0"
 
 [[package]]
-name = "lzss"
-version = "0.3"
-description = "LZSS compression algorithm"
+name = "isort"
+version = "5.10.1"
+description = "A Python utility / library to sort Python imports."
 category = "main"
 optional = false
-python-versions = "*"
+python-versions = ">=3.6.1,<4.0"
+
+[package.extras]
+pipfile_deprecated_finder = ["pipreqs", "requirementslib"]
+requirements_deprecated_finder = ["pipreqs", "pip-api"]
+colors = ["colorama (>=0.4.3,<0.5.0)"]
+plugins = ["setuptools"]
 
 [[package]]
 name = "mwclient"
@@ -206,22 +212,30 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
 name = "pyimg4"
-version = "0.3"
+version = "0.5.2"
 description = "A Python library/CLI tool for parsing Apple's IMG4 format."
 category = "main"
 optional = false
-python-versions = ">=3.9,<4.0"
+python-versions = ">=3.6,<4.0"
 
 [package.dependencies]
 asn1 = ">=2.5.0,<3.0.0"
-lzss = ">=0.3,<0.4"
 pycryptodome = ">=3.14.1,<4.0.0"
 pyliblzfse = ">=0.4.1,<0.5.0"
+pylzss = ">=0.3.1,<0.4.0"
 
 [[package]]
 name = "pyliblzfse"
 version = "0.4.1"
 description = "Python bindings for the LZFSE reference implementation"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "pylzss"
+version = "0.3.1"
+description = "LZSS compression algorithm"
 category = "main"
 optional = false
 python-versions = "*"
@@ -330,7 +344,7 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "e6427a2ddd15921843b6dc900af168aaf3c2f1408717d353e43c9c6ed769dce9"
+content-hash = "b916c2fd4bb5096fab36446bd043ad71188b92b1aed592f780e016db1f37eec1"
 
 [metadata.files]
 asn1 = [
@@ -464,9 +478,9 @@ ipwndfu = [
     {file = "ipwndfu-2.0.0b5-py3-none-any.whl", hash = "sha256:98188236f210991dc152b4037f4e03466810293e5f95e36af5190a4f647786da"},
     {file = "ipwndfu-2.0.0b5.tar.gz", hash = "sha256:6178ac1afe05d8f0e6dbcd3bb007bdc35125977e9565adace82db692fca82d26"},
 ]
-lzss = [
-    {file = "lzss-0.3-cp37-cp37m-macosx_10_15_x86_64.whl", hash = "sha256:799c7b0de950351df342d395280374afd8506f98fa3a578885edff244ad3d0ab"},
-    {file = "lzss-0.3.tar.gz", hash = "sha256:62436b70b5f6bf816385ccf522fa17a6880e19e11782f8f19ce85a300e2b3107"},
+isort = [
+    {file = "isort-5.10.1-py3-none-any.whl", hash = "sha256:6f62d78e2f89b4500b080fe3a81690850cd254227f27f75c3a0c491a1f351ba7"},
+    {file = "isort-5.10.1.tar.gz", hash = "sha256:e8443a5e7a020e9d7f97f1d7d9cd17c88bcb3bc7e218bf9cf5095fe550be2951"},
 ]
 mwclient = [
     {file = "mwclient-0.10.1-py2.py3-none-any.whl", hash = "sha256:7aad000c4c7f239c7c92c43e2d5fbdaf8573262accd6070524ff42e46950306e"},
@@ -525,8 +539,8 @@ pycryptodome = [
     {file = "pycryptodome-3.14.1.tar.gz", hash = "sha256:e04e40a7f8c1669195536a37979dd87da2c32dbdc73d6fe35f0077b0c17c803b"},
 ]
 pyimg4 = [
-    {file = "pyimg4-0.3-py3-none-any.whl", hash = "sha256:83508679b670b7684c94d3863afa65978594e32d0dfdb2b200db7621f32c8b01"},
-    {file = "pyimg4-0.3.tar.gz", hash = "sha256:2179248c9c2e3f8d4d9cdf52a0e0ed9576a704a624e67fdc90f2ebdc1d653da6"},
+    {file = "pyimg4-0.5.2-py3-none-any.whl", hash = "sha256:522e6ec1dba7f1830cf203475caf66a77d4381d3ebc0b9c918e94a1606de3bc3"},
+    {file = "pyimg4-0.5.2.tar.gz", hash = "sha256:f0b2c6c2cfff466904b75e8bdbbaa456783b3d01a3d2dcce86a8613981e7faf1"},
 ]
 pyliblzfse = [
     {file = "pyliblzfse-0.4.1-cp36-cp36m-macosx_10_6_intel.whl", hash = "sha256:69439a557a2979f18b816f7ccfcfdd2dc2021612811213ab569d0b35f1a04c22"},
@@ -541,6 +555,9 @@ pyliblzfse = [
     {file = "pyliblzfse-0.4.1-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:1b255da10393541c54d0b6d0c6a0c68691075736a5ac7c921add1c03c0488ffa"},
     {file = "pyliblzfse-0.4.1-cp39-cp39-win_amd64.whl", hash = "sha256:b661e91ad6f84c1fbaa07f8c7d1c493cd85fd839a7a6c2d0c0713574b7347eed"},
     {file = "pyliblzfse-0.4.1.tar.gz", hash = "sha256:bb0b899b3830c02fdf3dbde48ea59611833f366fef836e5c32cf8145134b7d3d"},
+]
+pylzss = [
+    {file = "pylzss-0.3.1.tar.gz", hash = "sha256:80bb3ac7be39f64848e711fa4ec239814963897f198eb9f764045d75b5bed29e"},
 ]
 pyusb = [
     {file = "pyusb-1.2.1-py3-none-any.whl", hash = "sha256:2b4c7cb86dbadf044dfb9d3a4ff69fd217013dbe78a792177a3feb172449ea36"},
