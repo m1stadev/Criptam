@@ -1,9 +1,9 @@
-from criptam.utils import HiddenPrints
-from ipwndfu.main import pwn
-from ipwndfu import dfu
+import sys
+from contextlib import redirect_stdout
 
 import requests
-import sys
+from ipwndfu import dfu
+from ipwndfu.main import pwn
 
 
 class Device:
@@ -70,7 +70,7 @@ class Device:
         if 'PWND' in self.data.keys():
             return True
 
-        with HiddenPrints():
+        with redirect_stdout(None):
             pwn(match_device=self.data['ECID'])
 
         self.data = self._get_data()

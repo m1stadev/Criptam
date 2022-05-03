@@ -1,8 +1,9 @@
-from criptam.device import Device
-from criptam.manifest import Manifest
 from typing import Optional
 
 import remotezip
+
+from .device import Device
+from .manifest import Manifest
 
 
 class IPSW:

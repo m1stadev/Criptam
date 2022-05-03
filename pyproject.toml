@@ -39,6 +39,13 @@ black = "^22.1.0"
 isort = "^5.10.1"
 
 
+[tool.black]
+skip-string-normalization = true
+
+[tool.isort]
+profile = "black"
+src_paths = ["criptam"]
+
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/m1stadev/Criptam/issues"
 

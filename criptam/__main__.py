@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 
-from criptam.decrypt import Decrypt
-from criptam.device import Device
-from criptam.ipsw import IPSW
-from importlib.metadata import version
-
 import argparse
 import platform
-import requests
 import sys
+from importlib.metadata import version
+
+import requests
+
+from .decrypt import Decrypt
+from .device import Device
+from .ipsw import IPSW
 
 __version__ = version(__package__)
 

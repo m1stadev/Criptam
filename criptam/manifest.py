@@ -1,7 +1,6 @@
-from typing import Optional
-
 import plistlib
 import sys
+from typing import Optional
 
 
 class Manifest:
