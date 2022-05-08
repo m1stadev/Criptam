@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Optional
 
 import remotezip
@@ -13,15 +14,13 @@ class IPSW:
 
         self.manifest = self.read_manifest()
 
-    def read_file(self, file: str) -> Optional[bytes]:
+    def read_file(self, path: Path) -> Optional[bytes]:
         try:
             with remotezip.RemoteZip(self.url) as ipsw:
-                return ipsw.read(file)
+                return ipsw.read(str(path))
 
         except remotezip.RemoteIOError:
             return None
 
     def read_manifest(self) -> Manifest:
-        return Manifest(
-            self.read_file('BuildManifest.plist'), self.device.data['boardconfig']
-        )
+        return Manifest(self.read_file('BuildManifest.plist'))

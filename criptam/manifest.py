@@ -1,59 +1,108 @@
 import plistlib
-import sys
-from typing import Optional
+from pathlib import Path
+
+IMAGE_NAMES = {
+    'RestoreRamDisk': 'RestoreRamdisk',
+    'AppleLogo': 'AppleLogo',
+    'BatteryCharging0': 'BatteryCharging0',
+    'BatteryCharging1': 'BatteryCharging1',
+    'BatteryFull': 'BatteryFull',
+    'BatteryLow0': 'BatteryLow0',
+    'BatteryLow1': 'BatteryLow1',
+    'DeviceTree': 'DeviceTree',
+    'BatteryPlugin': 'GlyphPlugin',
+    'iBEC': 'iBEC',
+    'iBoot': 'iBoot',
+    'iBootData': 'iBootData',
+    'iBSS': 'iBSS',
+    'KernelCache': 'Kernelcache',
+    'LLB': 'LLB',
+    'RecoveryMode': 'RecoveryMode',
+    'SEP': 'SEPFirmware',
+}
+
+
+class ManifestImage:
+    def __init__(self, name: str, data: dict):
+        self._data = data
+
+        self.name = name
+
+        info = self._data.get('Info')
+        if info is None:
+            raise KeyError('Info dict is missing from manifest image')
+
+        path = info.get('Path')
+        if path is None:
+            raise KeyError('Path is missing from manifest image')
+
+        self.path = Path(path)
+
+
+class ManifestIdentity:
+    def __init__(self, data: dict):
+        self._data = data
+
+        manifest = self._data.get('Manifest')
+        if manifest is None:
+            raise KeyError('Firmware images are missing from manifest')
+
+        self.images: list[ManifestImage] = list()
+        for name, data in manifest.items():
+            try:
+                self.images.append(ManifestImage(name, data))
+            except KeyError:
+                pass
+
+    @property
+    def boardconfig(self) -> str:
+        info = self._data.get('Info')
+        if info is None:
+            raise KeyError('Info dict is missing from manifest')
+
+        boardconfig = info.get('DeviceClass')
+
+        if boardconfig is None:
+            raise KeyError('DeviceClass is missing from manifest')
+
+        return boardconfig
+
+    @property
+    def restore_type(self) -> str:
+        info = self._data.get('Info')
+        if info is None:
+            raise KeyError('Info dict is missing from manifest')
+
+        restore_type = info.get('RestoreBehavior')
+
+        if restore_type is None:
+            raise KeyError('RestoreBehavior is missing from manifest')
+
+        return restore_type
 
 
 class Manifest:
-    def __init__(self, manifest: bytes, board: str):
-        self._manifest = plistlib.loads(manifest)
+    def __init__(self, data: bytes):
+        self._data = plistlib.loads(data)
 
-        self.version = tuple(
-            int(_) for _ in self._manifest['ProductVersion'].split('.')
-        )
-        self.buildid = self._manifest['ProductBuildVersion']
-        self.supported_devices = self._manifest['SupportedProductTypes']
+        self.version = tuple(int(_) for _ in self._data['ProductVersion'].split('.'))
+        self.buildid = self._data['ProductBuildVersion']
+        self.supported_devices = self._data['SupportedProductTypes']
 
-        # Get proper capitalization for board
-        self.board = next(
-            _['Info']['DeviceClass']
-            for _ in self._manifest['BuildIdentities']
-            if _['Info']['DeviceClass'].lower() == board.lower()
-        )
+        self.identities = [ManifestIdentity(i) for i in self._data['BuildIdentities']]
 
-        self.id = next(
-            _
-            for _ in range(len(self._manifest['BuildIdentities']))
-            if self._manifest['BuildIdentities'][_]['Info']['DeviceClass'] == self.board
+    def get_identity(self, board: str, erase: bool) -> ManifestIdentity:
+        identity = next(
+            (
+                i
+                for i in self.identities
+                if i.boardconfig.casefold() == board.casefold()
+                and i.restore_type == ('Erase' if erase == True else 'Update')
+            ),
+            None,
         )
 
-    def get_path(self, component: str) -> str:
-        if (
-            component
-            not in self._manifest['BuildIdentities'][self.id]['Manifest'].keys()
-        ):
-            sys.exit(f'Component not found in manifest: {component}.')
+        if identity is None:
+            raise ValueError('Failed to find identity for board: {}'.format(board))
 
-        return self._manifest['BuildIdentities'][self.id]['Manifest'][component][
-            'Info'
-        ]['Path']
-
-    def dump(self) -> bytes:
-        return plistlib.dumps(self._manifest)
-
-
-class RestoreManifest:
-    def __init__(self, manifest: bytes, boardconfig: str):
-        self._manifest = plistlib.loads(manifest)
-        self.boardconfig = boardconfig
-
-    @property
-    def platform(self) -> Optional[int]:
-        for device in self._manifest['DeviceMap']:
-            if device['BoardConfig'].lower() != self.boardconfig.lower():
-                continue
-
-            if device['Platform'].startswith('s5l89'):
-                return int(device['Platform'][3:-1], 16)
-
-            else:
-                return int(device['Platform'][-4:], 16)
+        return identity
