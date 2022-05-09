@@ -22,3 +22,4 @@ Criptam can be installed from [PyPI](https://pypi.org/project/criptam/), or loca
 | `-b BUILDID` | `--buildid BUILDID` | iOS build to decrypt keys for |
 | `-m MAJOR` | `--major MAJOR` | Major iOS version to decrypt firmware keys for |
 | `-a` | `--all` | Decrypt firmware keys for all versions |
+| `-y` | `--hackdifferent` | Export data in a YAML format suitable for [Hack Different's keybag database](https://github.com/hack-different/apple-knowledge/tree/main/_data/keybags) |
