@@ -176,7 +176,7 @@ def main():
                 kbag = next(
                     k
                     for k in image_file.payload.keybags
-                    if k.type == pyimg4.KeybagType.RELEASE
+                    if k.type == pyimg4.KeybagType.PRODUCTION
                 )
                 if kbag is None:
                     raise ValueError('Failed to find production keybag for image')

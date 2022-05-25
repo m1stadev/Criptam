@@ -15,7 +15,7 @@ class Decrypt:
         device = dfu.acquire_device(match=self.device.data['ECID'])
 
         kbag = next(
-            (k for k in image.payload.keybags if k.type == KeybagType.RELEASE), None
+            (k for k in image.payload.keybags if k.type == KeybagType.PRODUCTION), None
         )
         if kbag is None:
             raise ValueError('Failed to find production keybag for image')

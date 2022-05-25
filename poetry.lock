@@ -33,11 +33,11 @@ uvloop = ["uvloop (>=0.15.2)"]
 
 [[package]]
 name = "certifi"
-version = "2021.10.8"
+version = "2022.5.18.1"
 description = "Python package for providing Mozilla's CA Bundle."
 category = "main"
 optional = false
-python-versions = "*"
+python-versions = ">=3.6"
 
 [[package]]
 name = "cffi"
@@ -65,7 +65,7 @@ unicode_backport = ["unicodedata2"]
 name = "click"
 version = "8.1.3"
 description = "Composable command line interface toolkit"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 
@@ -76,7 +76,7 @@ colorama = {version = "*", markers = "platform_system == \"Windows\""}
 name = "colorama"
 version = "0.4.4"
 description = "Cross-platform colored terminal text."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
@@ -212,14 +212,15 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
 name = "pyimg4"
-version = "0.5.2"
-description = "A Python library/CLI tool for parsing Apple's IMG4 format."
+version = "0.6"
+description = "A Python library/CLI tool for parsing Apple's Image4 format."
 category = "main"
 optional = false
 python-versions = ">=3.6,<4.0"
 
 [package.dependencies]
 asn1 = ">=2.5.0,<3.0.0"
+click = ">=8.0.0,<9.0.0"
 pycryptodome = ">=3.14.1,<4.0.0"
 pyliblzfse = ">=0.4.1,<0.5.0"
 pylzss = ">=0.3.1,<0.4.0"
@@ -352,7 +353,7 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "d3c017c569922b0787da87e223875fc9538ba6e0e9d536126dbf267218769130"
+content-hash = "416bcf5957cc0cf334110d8ac4531923a4e10a9c105c5f1b447b42e5fbd3ba74"
 
 [metadata.files]
 asn1 = [
@@ -385,8 +386,8 @@ black = [
     {file = "black-22.3.0.tar.gz", hash = "sha256:35020b8886c022ced9282b51b5a875b6d1ab0c387b31a065b84db7c33085ca79"},
 ]
 certifi = [
-    {file = "certifi-2021.10.8-py2.py3-none-any.whl", hash = "sha256:d62a0163eb4c2344ac042ab2bdf75399a71a2d8c7d47eac2e2ee91b9d6339569"},
-    {file = "certifi-2021.10.8.tar.gz", hash = "sha256:78884e7c1d4b00ce3cea67b44566851c4343c120abd683433ce934a68ea58872"},
+    {file = "certifi-2022.5.18.1-py3-none-any.whl", hash = "sha256:f1d53542ee8cbedbe2118b5686372fb33c297fcd6379b050cca0ef13a597382a"},
+    {file = "certifi-2022.5.18.1.tar.gz", hash = "sha256:9c5705e395cd70084351dd8ad5c41e65655e08ce46f2ec9cf6c2c08390f71eb7"},
 ]
 cffi = [
     {file = "cffi-1.15.0-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:c2502a1a03b6312837279c8c1bd3ebedf6c12c4228ddbad40912d671ccc8a962"},
@@ -547,8 +548,8 @@ pycryptodome = [
     {file = "pycryptodome-3.14.1.tar.gz", hash = "sha256:e04e40a7f8c1669195536a37979dd87da2c32dbdc73d6fe35f0077b0c17c803b"},
 ]
 pyimg4 = [
-    {file = "pyimg4-0.5.2-py3-none-any.whl", hash = "sha256:522e6ec1dba7f1830cf203475caf66a77d4381d3ebc0b9c918e94a1606de3bc3"},
-    {file = "pyimg4-0.5.2.tar.gz", hash = "sha256:f0b2c6c2cfff466904b75e8bdbbaa456783b3d01a3d2dcce86a8613981e7faf1"},
+    {file = "pyimg4-0.6-py3-none-any.whl", hash = "sha256:2212262b9e0ca18185edcb4212dec4627cb19ecfefe203a89fb14a36525528f2"},
+    {file = "pyimg4-0.6.tar.gz", hash = "sha256:ab1cbbd9535e31a6319b8663923fa1019d8269e5001f65f29e9d00c492e3fa27"},
 ]
 pyliblzfse = [
     {file = "pyliblzfse-0.4.1-cp36-cp36m-macosx_10_6_intel.whl", hash = "sha256:69439a557a2979f18b816f7ccfcfdd2dc2021612811213ab569d0b35f1a04c22"},
