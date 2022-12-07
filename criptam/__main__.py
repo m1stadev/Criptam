@@ -175,8 +175,7 @@ def main(
             keybag, _backend='ipwndfu' if not use_gaster else 'gaster'
         )
 
-    if verbose:
-        keys_title = 'Firmware keys'
+    keys_title = 'Firmware keys'
 
     if identity.chip_id in (0x8000, 0x8003):
         keys_title += f' ({identity.board_config})'
