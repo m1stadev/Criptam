@@ -1,77 +1,150 @@
-import sys
+import shutil
+import subprocess
 from contextlib import redirect_stdout
+from pathlib import Path
 
 import requests
-from ipwndfu import dfu
-from ipwndfu.main import pwn
+import usb
+import usb.backend.libusb1
+import usb.util
+from ipwndfu.main import decrypt_gid
+from pyimg4 import Keybag
+
+
+def get_backend() -> str:
+    '''Attempt to find a libusb 1.0 library to use as pyusb's backend, exit if one isn't found.'''
+
+    search_paths = (
+        Path('/usr/local/lib'),
+        Path('/usr/lib'),
+        Path('/opt/homebrew/lib'),
+        Path('/opt/procursus/lib'),
+    )
+
+    for path in search_paths:
+        for file_ in path.rglob('*libusb-1.0*'):
+            if not file_.is_file():
+                continue
+
+            if file_.suffix not in ('.so', '.dylib'):
+                continue
+
+            return usb.backend.libusb1.get_backend(find_library=lambda _: file_)
+
+    pass  # TODO: raise error
 
 
 class Device:
     def __init__(self):
-        self.data = self._get_data()
-
-    def _get_data(self) -> dict:
-        device = dfu.acquire_device(fatal=False)
+        device = usb.core.find(
+            idVendor=0x5AC,
+            idProduct=0x1227,
+            backend=get_backend(),
+        )
         if device is None:
-            sys.exit('[ERROR] Device in DFU mode not found. Exiting.')
+            print('no device found')  # TODO: raise error
 
-        device_data = dict()
-        for item in device.serial_number.split():
-            device_data[item.split(':')[0]] = item.split(':')[1]
+        self._pwned = False
+        for fourcc, value in [
+            (item.split(':')[0], item.split(':')[1])
+            for item in device.serial_number.split()
+        ]:
+            if fourcc == 'CPID':
+                self._chip_id = int(value, 16)
 
-        for i in ('CPID', 'CPRV', 'BDID', 'CPFM', 'SCEP', 'IBFL'):
-            device_data[i] = int(device_data[i], 16)
+            elif fourcc == 'BDID':
+                self._board_id = int(value, 16)
 
-        dfu.release_device(device)
+            elif fourcc == 'ECID':
+                self._ecid = int(value, 16)
 
-        api = requests.get('https://api.ipsw.me/v4/devices').json()
-        for d in api:
-            for board in d['boards']:
-                if (
-                    board['cpid'] == device_data['CPID']
-                    and board['bdid'] == device_data['BDID']
-                ):
-                    device_data['identifier'] = d['identifier']
-                    device_data['boardconfig'] = board['boardconfig']
+            elif fourcc == 'PWND':
+                self._pwned = True
 
-        return device_data
+        usb.util.dispose_resources(device)
+
+        ipsw_api = requests.get('https://api.ipsw.me/v4/devices').json()
+        for device in ipsw_api:
+            for board in device['boards']:
+                if board['cpid'] == self.chip_id and board['bdid'] == self.board_id:
+                    self._identifier = device['identifier']
+                    break
 
     @property
-    def baseband(self) -> bool:
-        if self.data['identifier'].startswith('iPhone'):
-            return True
+    def board_id(self) -> int:
+        return self._board_id
 
-        else:
-            return self.data[
-                'identifier'
-            ] in (  # All (current) 64-bit cellular iPads vulerable to checkm8.
-                'iPad4,2',
-                'iPad4,3',
-                'iPad4,5',
-                'iPad4,6',
-                'iPad4,8',
-                'iPad4,9',
-                'iPad5,2',
-                'iPad5,4',
-                'iPad6,4',
-                'iPad6,8',
-                'iPad6,12',
-                'iPad7,2',
-                'iPad7,4',
-                'iPad7,6',
-                'iPad7,12',
-            )
+    @property
+    def chip_id(self) -> int:
+        return self._chip_id
+
+    @property
+    def ecid(self) -> int:
+        return self._ecid
+
+    @property
+    def identifier(self) -> str:
+        return self._identifier
 
     @property
     def pwned(self) -> bool:
-        return 'PWND' in self.data.keys()
+        return self._pwned
 
-    def pwn(self) -> bool:
-        if 'PWND' in self.data.keys():
-            return True
+    @property
+    def soc(self) -> str:
+        if 0x8720 <= self.chip_id <= 0x8960:
+            return f'S5L{self.chip_id:02x}'
+        elif self.chip_id in range(0x7002, 0x8003):
+            return f'S{self.chip_id:02x}'
+        else:
+            return f'T{self.chip_id:02x}'
 
-        with redirect_stdout(None):
-            pwn(match_device=self.data['ECID'])
+    def decrypt_keybag(self, keybag=Keybag, _backend='ipwndfu') -> Keybag:
+        if not isinstance(keybag, Keybag):
+            raise TypeError('Invalid keybag provided')
 
-        self.data = self._get_data()
-        return self.pwned
+        if _backend not in ('ipwndfu', 'gaster'):
+            raise ValueError('Unknown backend provided')
+
+        device = usb.core.find(
+            idVendor=0x5AC,
+            idProduct=0x1227,
+            backend=get_backend(),
+        )
+
+        if _backend == 'ipwndfu':
+            with redirect_stdout(None):  # Hide ipwndfu's output
+                dec_kbag = decrypt_gid(device, (keybag.iv + keybag.key).hex())
+
+            usb.util.dispose_resources(device)
+
+            dec_kbag = Keybag(
+                iv=bytes.fromhex(dec_kbag[:32]),
+                key=bytes.fromhex(dec_kbag[-64:]),
+            )
+
+        elif _backend == 'gaster':
+            if shutil.which('gaster') is None:
+                raise FileNotFoundError(
+                    'Specified to use gaster as backend, but gaster not found in PATH'
+                )
+
+            try:
+                subprocess.check_output(('gaster', '--help'), universal_newlines=True)
+            except subprocess.CalledProcessError as gaster:
+                if 'decrypt_kbag' not in gaster.output:
+                    raise ValueError(
+                        'Specified to use gaster as backend, but installed gaster version does not support decrypting keybags'
+                    )
+
+            gaster_decrypt = subprocess.check_output(
+                ('gaster', 'decrypt_kbag', (keybag.iv + keybag.key).hex()),
+                universal_newlines=True,
+            ).splitlines()[-1]
+
+            dec_kbag = Keybag(
+                iv=bytes.fromhex(gaster_decrypt.split('IV: ')[1].split(',')[0]),
+                key=bytes.fromhex(gaster_decrypt.split('key: ')[1]),
+            )
+
+        return dec_kbag

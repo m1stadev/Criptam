@@ -1,71 +1,112 @@
-#!/usr/bin/env python3
-
-import argparse
-import pathlib
 import platform
 import sys
-from importlib.metadata import version
+from typing import Optional
 
+import click
 import pyimg4
 import requests
-import yaml
 
-from .decrypt import Decrypt
+from . import __version__
 from .device import Device
 from .ipsw import IPSW
-from .manifest import IMAGE_NAMES
-
-__version__ = version(__package__)
 
 RELEASE_API = 'https://api.ipsw.me/v4/device'
 BETA_API = 'https://api.m1sta.xyz/betas'
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description=f'Criptam {__version__} - iOS firmware key decrypter',
-        usage="criptam [-b BUILDID] [-m MAJOR] [-a]",
-    )
+@click.command()
+@click.version_option(message=f'Criptam {__version__}')
+@click.option(
+    '-b',
+    '--build-id',
+    'buildid',
+    type=str,
+    required=True,
+    help='iOS/iPadOS build ID to decrypt firmware keys for.',
+)
+@click.option(
+    '-d',
+    '--device-identifier',
+    'identifier',
+    type=str,
+    help='Device identifier to use in place of connected device (must share same SoC as connected device).',
+)
+@click.option(
+    '--gaster',
+    'use_gaster',
+    is_flag=True,
+    help='Use gaster to decrypt firmware keys instead of ipwndfu (requires gaster to be installed).',
+)
+@click.option(
+    '-w',
+    '--wiki',
+    'wiki_print',
+    is_flag=True,
+    help='Print firmware keys in a format suitable for The iPhone Wiki.',
+)
+@click.option(
+    '-v',
+    '--verbose',
+    'verbose',
+    is_flag=True,
+    help='Increase verbosity.',
+)
+def main(
+    buildid: str,
+    identifier: Optional[str],
+    use_gaster: bool,
+    wiki_print: bool,
+    verbose: bool,
+) -> None:
+    '''A Python CLI tool for decrypting iOS/iPadOS bootchain firmware keys.'''
 
-    version = parser.add_mutually_exclusive_group(required=True)
-    version.add_argument(
-        '-b', '--buildid', help='iOS build to decrypt firmware keys for'
-    )
-    version.add_argument(
-        '-m', '--major', help='Major iOS version to decrypt firmware keys for'
-    )
-    version.add_argument(
-        '-a',
-        '--all',
-        help='Decrypt firmware keys for all versions',
-        action='store_true',
-    )
-
-    parser.add_argument(
-        '-y',
-        '--hackdifferent',
-        type=pathlib.Path,
-        help="Export data in a YAML format suitable for Hack Different's keybag database",
-        dest='hd',
-    )
-
-    args = parser.parse_args()
+    if not verbose:
+        sys.tracebacklimit = 0
 
     if platform.system() == 'Windows':
-        sys.exit('[ERROR] Windows systems are not supported. Exiting.')
+        click.echo('[ERROR] Windows systems are not supported. Exiting.')
+        return
 
-    print(f'Criptam {__version__}')
-
-    print(f'\nConnecting to DFU device...')
+    click.echo('Attempting to connect to device')
     device = Device()
 
-    print(f"\nGetting firmware information for device: {device.data['identifier']}...")
+    if not device.pwned:
+        click.echo('[ERROR] Device is not in Pwned DFU mode. Exiting.')
+        return
+
+    if identifier is not None:
+        identifier = 'P'.join(identifier.lower().split('p'))
+
+        if not any(i in identifier for i in ('iPhone', 'iPad', 'iPod')):
+            click.echo(f'[ERROR] Invalid device identifier: {identifier}. Exiting.')
+            return
+
+    else:
+        identifier = device.identifier
+
+    click.echo(f'Getting firmware information for device: {identifier}...')
 
     firmwares = list()
     for API_URL in (RELEASE_API, BETA_API):
-        api = requests.get(f"{API_URL}/{device.data['identifier']}").json()
+        api = requests.get(f'{API_URL}/{identifier}').json()
 
         if API_URL == RELEASE_API:
+            if identifier != device.identifier:
+                if not any(
+                    board for board in api['boards'] if board['cpid'] == device.chip_id
+                ):
+                    if 0x8720 <= api['cpid'] <= 0x8960:
+                        soc = f"S5L{api['cpid']:02x}"
+                    elif device.chip_id in range(0x7002, 0x8003):
+                        soc = f"S{api['cpid']:02x}"
+                    else:
+                        soc = f"T{api['cpid']:02x}"
+
+                    click.echo(
+                        f"SoC of provided device identifier: {identifier} ({soc}) does not match connected device: {device.identifier} ({device.soc}). Exiting."
+                    )
+                    return
+
             firms = api['firmwares']
         elif API_URL == BETA_API:
             firms = api
@@ -77,202 +118,88 @@ def main():
             firmwares.append(firm)
 
     firmwares = sorted(firmwares, key=lambda x: x['buildid'], reverse=True)
-    if args.buildid:
-        buildid = args.buildid.upper()
-        firmwares = [
+
+    try:
+        firmware = next(
             firm
             for firm in firmwares
             if firm['buildid'].casefold() == buildid.casefold()
-        ]
-        if len(firmwares) == 0:
-            sys.exit(
-                f"iOS Build {buildid} does not exist for device: {device.data['identifier']}. Exiting."
+        )
+    except StopIteration:
+        click.echo(
+            f'Build {buildid} does not exist for device: {device.identifier}. Exiting.'
+        )
+        return
+
+    buildid = firmware['buildid']
+
+    ipsw = IPSW(device, firmware['url'])
+    manifest = ipsw.read_manifest()
+
+    try:
+        ipsw = IPSW(device, firmware['url'])
+        manifest = ipsw.read_manifest()
+    except:
+        click.echo(
+            f'Failed to download build manifest for firmware: {buildid}, device: {device.identifier}. Exiting.'
+        )
+        return
+
+    identity = next(id_ for id_ in manifest.identities if id_.chip_id == device.chip_id)
+
+    click.echo(f'Decrypting keys for firmware: {buildid}, device: {identifier}...')
+
+    keybags = {
+        'iBSS': None,
+        'iBEC': None,
+        'LLB': None,
+        'iBoot': None,
+    }
+    for component in keybags.keys():
+        image = pyimg4.IM4P(
+            ipsw.read_file(next(i.path for i in identity.images if i.name == component))
+        )
+        if image is None:
+            click.echo(
+                f'Failed to download {component} for firmware: {buildid}, device: {device.identifier}. Exiting.'
             )
+            return
 
-    elif args.major:
-        firmwares = [
-            firm for firm in firmwares if firm['version'].startswith(args.major)
-        ]
-        if len(firmwares) == 0:
-            sys.exit(
-                f"iOS {args.major} does not exist for device: {device.data['identifier']}. Exiting."
-            )
-
-    elif args.all:
-        pass
-
-    if len(firmwares) > 10:
-        try:
-            input(
-                f"[WARNING] This will decrypt bootchain firmware keys for {len(firmwares)} firmwares.\nPress ENTER to continue, or CTRL+C to cancel: "
-            )
-        except KeyboardInterrupt:
-            sys.exit('\nExiting.')
-
-    if not device.pwned:
-        print('Entering Pwned DFU mode...')
-        device.pwn()
-
-    decrypter = Decrypt(device)
-    decrypted_keys = dict()
-    for firm in firmwares:
-        decrypted_keys[firm['buildid']] = dict()
-
-        try:
-            ipsw = IPSW(
-                device,
-                firm['url'],
-            )
-        except:
-            if len(firmwares) == 1:
-                sys.exit(
-                    f"\n[ERROR] Failed to download bootchain for iOS {firm['version']}, device: {device.data['identifier']}. Exiting."
-                )
-            else:
-                print(
-                    f"\n[ERROR] Failed to download bootchain for iOS {firm['version']}, device: {device.data['identifier']}. Skipping."
-                )
-                continue
-
-        print(
-            "\nDecrypting keys for iOS {}, device: {}{}...".format(
-                firm['version'],
-                device.data['identifier'],
-                f" ({device.data['boardconfig']})"
-                if 0x8000 <= device.data['CPID'] <= 0x8003
-                else '',
-            )
+        keybag = next(
+            kbag
+            for kbag in image.payload.keybags
+            if kbag.type == pyimg4.KeybagType.PRODUCTION
         )
 
-        erase_id = ipsw.manifest.get_identity(device.data['boardconfig'], erase=True)
-        for image in erase_id.images:
-            if image.name not in IMAGE_NAMES.keys():
-                continue
+        keybags[component] = device.decrypt_keybag(
+            keybag, _backend='ipwndfu' if not use_gaster else 'gaster'
+        )
 
-            # Only certain bootchain components are encrypted on iOS 10+
-            if ipsw.manifest.version[0] >= 10 and image.name not in (
-                'iBSS',
-                'iBEC',
-                'LLB',
-                'iBoot',
-                'iBootData',
-                'SEP',
-            ):
-                continue
+    if verbose:
+        keys_title = 'Firmware keys'
 
-            if image.name == 'OS':  # Not downloading the entire filesystem
-                continue
+    if identity.chip_id in (0x8000, 0x8003):
+        keys_title += f' ({identity.board_config})'
 
-            try:
-                image_file = pyimg4.IM4P(ipsw.read_file(image.path))
-            except:  # Not an Image4 Payload
-                continue
+    if wiki_print:
+        keys_title += ' (The iPhone Wiki format)'
 
-            # Confirm one more time that this is an encrypted image
-            if not image_file.payload.encrypted:
-                continue
-
-            if image.name == 'SEP':
-                kbag = next(
-                    k
-                    for k in image_file.payload.keybags
-                    if k.type == pyimg4.KeybagType.PRODUCTION
-                )
-                if kbag is None:
-                    raise ValueError('Failed to find production keybag for image')
-
-                iv, key = kbag.iv.hex(), kbag.key.hex()
-                image_encrypted = True
-            else:
-                iv, key = decrypter.decrypt_image(image_file)
-                image_encrypted = False
-
-                print(f"{image.name} KBAG for iOS {firm['version']}: {iv + key}")
-
-            decrypted_keys[firm['buildid']][image.name] = {
-                'filename': image.path.name,
-                'iv': iv,
-                'key': key,
-                'encrypted': image_encrypted,
-            }
-
-        try:
-            if ipsw.manifest.version[0] <= 9:
-                update_id = ipsw.manifest.get_identity(
-                    device.data['boardconfig'], erase=False
-                )
-
-                update_ramdisk = next(
-                    i for i in update_id.images if i.name == 'RestoreRamDisk'
-                )
-
-                update_ramdisk_file = pyimg4.IM4P(
-                    ipsw.read_file(update_ramdisk.path)
-                )  # Confirm one more time that this is an encrypted image
-
-                iv, key = decrypter.decrypt_image(update_ramdisk_file)
-                decrypted_keys[firm['buildid']]['UpdateRamdisk'] = {
-                    'filename': update_ramdisk.path.name,
-                    'iv': iv,
-                    'key': key,
-                    'encrypted': False,
-                }
-
-                print(f"UpdateRamdisk KBAG for iOS {firm['version']}: {iv + key}")
-        except:
-            pass
-
-    print('\nDone!')
-
-    if args.hd:
-        cpid_hex = int(hex(device.data['CPID']).removeprefix('0x'))
-        bdid_hex = int(hex(device.data['BDID']).removeprefix('0x'))
-
-        hd_data = {
-            'metadata': {'description': str(), 'credits': list()},
-            'constants': {'chip_id': cpid_hex},
-            'keybag_boards': {bdid_hex: dict()},
-        }
-
-        for buildid in decrypted_keys.keys():
-            images = dict()
-            for image in decrypted_keys[buildid].keys():
-                filename = decrypted_keys[buildid][image]['filename']
-                iv = decrypted_keys[buildid][image]['iv']
-                key = decrypted_keys[buildid][image]['key']
-
-                if decrypted_keys[buildid][image]['encrypted'] == False:
-                    images[
-                        IMAGE_NAMES[image] if image in IMAGE_NAMES.keys() else image
-                    ] = {
-                        'filename': filename
-                        if not filename.endswith('.dmg')
-                        else filename.replace('.dmg', ''),
-                        'iv': iv,
-                        'key': key,
-                    }
-                else:
-                    images[IMAGE_NAMES[image]] = {
-                        'filename': filename,
-                        'keybags': {
-                            'production': {
-                                'encrypted_iv': iv,
-                                'encrypted_key': key,
-                            }
-                        },
-                    }
-
-            hd_data['keybag_boards'][bdid_hex][buildid] = {'components': images}
-
-        with args.hd.open('w') as f:
-            f.write(
-                yaml.safe_dump(hd_data, sort_keys=False, explicit_start=True).replace(
-                    r"''", ''
-                )
+    click.echo(f'{keys_title}:')
+    if wiki_print:
+        for component in ('iBEC', 'iBoot', 'iBSS', 'LLB'):
+            click.echo(
+                f' | {component}IV               = {keybags[component].iv.hex()}'
+            )
+            click.echo(
+                f' | {component}Key              = {keybags[component].key.hex()}'
             )
 
-        print(f"Saved keys to: {args.hd}")
+            if component != 'LLB':
+                click.echo()
+    else:
+        for component, keybag in keybags.items():
+            click.echo(f'{component} IV: {keybags[component].iv.hex()}')
+            click.echo(f'{component} Key: {keybags[component].key.hex()}')
 
-
-if __name__ == '__main__':
-    main()
+            if component != 'iBoot':
+                click.echo()

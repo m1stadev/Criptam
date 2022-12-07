@@ -1,84 +1,50 @@
 import plistlib
-from pathlib import Path
-
-IMAGE_NAMES = {
-    'RestoreRamDisk': 'RestoreRamdisk',
-    'AppleLogo': 'AppleLogo',
-    'BatteryCharging0': 'BatteryCharging0',
-    'BatteryCharging1': 'BatteryCharging1',
-    'BatteryFull': 'BatteryFull',
-    'BatteryLow0': 'BatteryLow0',
-    'BatteryLow1': 'BatteryLow1',
-    'DeviceTree': 'DeviceTree',
-    'BatteryPlugin': 'GlyphPlugin',
-    'iBEC': 'iBEC',
-    'iBoot': 'iBoot',
-    'iBootData': 'iBootData',
-    'iBSS': 'iBSS',
-    'KernelCache': 'Kernelcache',
-    'LLB': 'LLB',
-    'RecoveryMode': 'RecoveryMode',
-    'SEP': 'SEPFirmware',
-}
 
 
 class ManifestImage:
     def __init__(self, name: str, data: dict):
         self._data = data
+        self._name = name
 
-        self.name = name
+    @property
+    def name(self) -> str:
+        return self._name
 
-        info = self._data.get('Info')
-        if info is None:
-            raise KeyError('Info dict is missing from manifest image')
+    @property
+    def path(self) -> str:
+        return self._data['Info']['Path']
 
-        path = info.get('Path')
-        if path is None:
-            raise KeyError('Path is missing from manifest image')
-
-        self.path = Path(path)
+    @property
+    def personalize(self) -> bool:
+        return self._data['Info']['Personalize']
 
 
 class ManifestIdentity:
     def __init__(self, data: dict):
         self._data = data
-
-        manifest = self._data.get('Manifest')
-        if manifest is None:
-            raise KeyError('Firmware images are missing from manifest')
-
-        self.images: list[ManifestImage] = list()
-        for name, data in manifest.items():
-            try:
-                self.images.append(ManifestImage(name, data))
-            except KeyError:
-                pass
+        self._images = [
+            ManifestImage(name, data) for name, data in self._data['Manifest'].items()
+        ]
 
     @property
-    def boardconfig(self) -> str:
-        info = self._data.get('Info')
-        if info is None:
-            raise KeyError('Info dict is missing from manifest')
+    def board_config(self) -> str:
+        return self._data['Info']['DeviceClass']
 
-        boardconfig = info.get('DeviceClass')
+    @property
+    def board_id(self) -> int:
+        return int(self._data['ApBoardID'], 16)
 
-        if boardconfig is None:
-            raise KeyError('DeviceClass is missing from manifest')
+    @property
+    def chip_id(self) -> int:
+        return int(self._data['ApChipID'], 16)
 
-        return boardconfig
+    @property
+    def images(self) -> int:
+        return self._images
 
     @property
     def restore_type(self) -> str:
-        info = self._data.get('Info')
-        if info is None:
-            raise KeyError('Info dict is missing from manifest')
-
-        restore_type = info.get('RestoreBehavior')
-
-        if restore_type is None:
-            raise KeyError('RestoreBehavior is missing from manifest')
-
-        return restore_type
+        return self._data['Info']['RestoreBehavior']
 
 
 class Manifest:
