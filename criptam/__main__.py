@@ -186,11 +186,14 @@ def main(
     click.echo(f'{keys_title}:')
     if wiki_print:
         for component in ('iBEC', 'iBoot', 'iBSS', 'LLB'):
+            iv_str = f' | {component}IV'
             click.echo(
-                f' | {component}IV               = {keybags[component].iv.hex()}'
+                f"{iv_str + (' ' * (24 - len(iv_str)))} = {keybags[component].iv.hex()}"
             )
+
+            key_str = f' | {component}Key'
             click.echo(
-                f' | {component}Key              = {keybags[component].key.hex()}'
+                f"{key_str + (' ' * (24 - len(key_str)))} = {keybags[component].key.hex()}"
             )
 
             if component != 'LLB':
